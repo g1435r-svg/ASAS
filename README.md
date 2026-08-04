@@ -15,7 +15,21 @@
 
 ---
 
-## התקנה מהירה
+## התקנה והפעלה (Windows – קל מאוד!)
+
+פשוט לחץ פעמיים על הקבצים הבאים לפי הסדר:
+
+| קובץ BAT | מה הוא עושה |
+|----------|-------------|
+| `התקנה.bat` | מתקין Python ותלויות אוטומטית |
+| `הורד_מודל.bat` | מוריד מודל Mistral 7B (~4.1 GB) – **מומלץ** |
+| `הורד_מודל_קטן.bat` | מוריד מודל Llama 1B (~1.3 GB) – מהיר יותר |
+| `הפעל_CLI.bat` | פותח צ'אט בעברית בשורת פקודה |
+| `הפעל_WEB.bat` | פותח ממשק ווב ופותח דפדפן אוטומטית |
+
+---
+
+## התקנה ידנית (Linux / macOS)
 
 ```bash
 # 1. שכפל את הפרויקט
@@ -23,28 +37,25 @@ git clone https://github.com/g1435r-svg/ASAS.git
 cd ASAS
 
 # 2. צור סביבה וירטואלית
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Linux / macOS:
-source venv/bin/activate
+python -m venv ai_chat/venv
+source ai_chat/venv/bin/activate
 
 # 3. התקן תלויות
-pip install -r requirements.txt
+pip install -r ai_chat/requirements.txt
 
 # 4. הורד מודל (בחר אחד)
-python download_model.py             # Mistral 7B Q4_K_M  (~4.1 GB) – מומלץ
-python download_model.py --small     # Llama 1B Q8_0       (~1.3 GB) – קטן ומהיר
+python ai_chat/download_model.py             # Mistral 7B Q4_K_M  (~4.1 GB) – מומלץ
+python ai_chat/download_model.py --small     # Llama 1B Q8_0       (~1.3 GB) – קטן ומהיר
 ```
 
 ---
 
-## הפעלה
+## הפעלה ידנית
 
 ### ממשק שורת פקודה (CLI)
 
 ```bash
-python chat_cli.py
+cd ai_chat && python chat_cli.py
 ```
 
 פקודות בתוך הצ'אט:
@@ -57,7 +68,7 @@ python chat_cli.py
 ### ממשק ווב (דפדפן)
 
 ```bash
-python app.py
+cd ai_chat && python app.py
 ```
 
 פתח בדפדפן: [http://localhost:5000](http://localhost:5000)
@@ -67,9 +78,8 @@ python app.py
 ## שימוש במודל מותאם אישית
 
 ```bash
-# הגדר נתיב למודל שלך:
-MODEL_PATH=/path/to/your/model.gguf python chat_cli.py
-MODEL_PATH=/path/to/your/model.gguf python app.py
+MODEL_PATH=/path/to/your/model.gguf python ai_chat/chat_cli.py
+MODEL_PATH=/path/to/your/model.gguf python ai_chat/app.py
 ```
 
 ---
