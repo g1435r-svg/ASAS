@@ -46,7 +46,17 @@ def main() -> None:
     run(pip + ["install", "--upgrade", "pyinstaller"], "התקנת PyInstaller")
 
     # 3. Install app dependencies (flask, colorama, llama-cpp-python …)
-    run(pip + ["install", "--no-cache-dir", "-r", reqs], "התקנת תלויות האפליקציה")
+    # Install llama-cpp-python first from the pre-built wheels index to avoid
+    # source-build permission errors on Windows (vendor tarball extraction).
+    run(
+        pip + [
+            "install", "--prefer-binary", "--no-cache-dir",
+            "llama-cpp-python>=0.2.0",
+            "--extra-index-url", "https://abetlen.github.io/llama-cpp-python/whl/cpu",
+        ],
+        "התקנת llama-cpp-python (גרסה מוכנה)",
+    )
+    run(pip + ["install", "--no-cache-dir", "flask", "colorama"], "התקנת שאר התלויות")
 
     # 4. Build
     run([sys.executable, "-m", "PyInstaller", "--noconfirm", spec], "בניית EXEs")

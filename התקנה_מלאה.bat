@@ -39,7 +39,16 @@ echo.
 
 :: ── 3. Install dependencies ────────────────────────────────────────────────
 echo [3/5] מתקין תלויות (זה עשוי לקחת מספר דקות)...
-pip install --no-cache-dir -r ai_chat\requirements.txt
+echo       שלב 1: מתקין llama-cpp-python (גרסה מוכנה - ללא קומפילציה)...
+pip install --prefer-binary --no-cache-dir "llama-cpp-python>=0.2.0" --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+if errorlevel 1 (
+    echo.
+    echo שגיאה: התקנת llama-cpp-python נכשלה.
+    pause
+    exit /b 1
+)
+echo       שלב 2: מתקין שאר התלויות...
+pip install --no-cache-dir flask colorama
 if errorlevel 1 (
     echo.
     echo שגיאה: התקנת התלויות נכשלה.
