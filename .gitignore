@@ -19,6 +19,11 @@ build/
 .vscode/
 .idea/
 
+# PyInstaller
+*.spec.bak
+__pycache__/
+*.pyc
+
 # Logs
 *.log
 chat_history.json

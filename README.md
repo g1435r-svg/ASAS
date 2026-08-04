@@ -99,14 +99,49 @@ MODEL_PATH=/path/to/your/model.gguf python ai_chat/app.py
 
 ```
 ASAS/
-├── app.py              # שרת Flask (ממשק ווב)
-├── chat_cli.py         # ממשק שורת פקודה
-├── download_model.py   # הורדת מודלים
-├── requirements.txt    # תלויות Python
-├── templates/
-│   └── index.html      # דף HTML לממשק הווב
-└── models/             # תיקיית מודלים (ריקה – הורד עם download_model.py)
+├── build.bat               # בנייה חד-לחיצתית של ASAS.exe (Windows)
+├── build_exe.py            # סקריפט בנייה (PyInstaller)
+├── ASAS.spec               # קובץ הגדרות PyInstaller
+├── התקנה.bat               # התקנה ידנית (ללא EXE)
+├── הורד_מודל.bat           # הורדת Mistral 7B
+├── הורד_מודל_קטן.bat       # הורדת Llama 1B
+├── הפעל_CLI.bat            # הפעלת CLI
+├── הפעל_WEB.bat            # הפעלת ממשק ווב
+└── ai_chat/
+    ├── launcher.py         # GUI launcher (כניסה ל-EXE)
+    ├── app.py              # שרת Flask
+    ├── chat_cli.py         # ממשק שורת פקודה
+    ├── download_model.py   # הורדת מודלים
+    ├── requirements.txt    # תלויות Python
+    ├── templates/
+    │   └── index.html      # דף ווב
+    └── models/             # תיקיית מודלים (הורד עם launcher)
 ```
+
+---
+
+## בניית EXE פורטבילי
+
+### Windows – לחיצה אחת
+
+```
+build.bat
+```
+
+### ידנית
+
+```bash
+pip install pyinstaller
+pip install -r ai_chat/requirements.txt
+pyinstaller --noconfirm ASAS.spec
+```
+
+הפלט: `dist/ASAS/ASAS.exe`  
+**הפץ את תיקיית `dist/ASAS/` כולה** – לחץ פעמיים על `ASAS.exe`.
+
+בהפעלה ראשונה: חלון גרפי יופיע, בחר מודל ולחץ **הורד**, ואז התחל לשוחח.
+
+> **הערה:** המודל עצמו (~1–4 GB) מוריד בנפרד – לא ניתן לכלול אותו בתוך EXE.
 
 ---
 
