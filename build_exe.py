@@ -46,7 +46,7 @@ def main() -> None:
     run(pip + ["install", "--upgrade", "pyinstaller"], "התקנת PyInstaller")
 
     # 3. Install app dependencies (flask, colorama, llama-cpp-python …)
-    run(pip + ["install", "-r", reqs], "התקנת תלויות האפליקציה")
+    run(pip + ["install", "--no-cache-dir", "-r", reqs], "התקנת תלויות האפליקציה")
 
     # 4. Build
     run([sys.executable, "-m", "PyInstaller", "--noconfirm", spec], "בניית EXEs")

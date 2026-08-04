@@ -29,7 +29,7 @@ echo מפעיל סביבה וירטואלית...
 call ai_chat\venv\Scripts\activate.bat
 
 echo מתקין תלויות...
-pip install -r ai_chat\requirements.txt
+pip install --no-cache-dir -r ai_chat\requirements.txt
 
 echo.
 echo ============================================
