@@ -91,6 +91,8 @@ class App(tk.Tk):
         # RTL support hint
         self.option_add("*font", ("Segoe UI", 11))
 
+        self._server_proc = None   # holds the Flask subprocess when running
+
         self._build_ui()
         self._check_model_on_start()
 
@@ -207,20 +209,44 @@ class App(tk.Tk):
         model_path = find_model()
         env = {**os.environ, "MODEL_PATH": model_path}
         try:
-            subprocess.Popen(
+            self._server_proc = subprocess.Popen(
                 [python_exe(), APP_PY],
                 env=env,
                 cwd=BASE_DIR,
             )
-            # Give the server a moment then open the browser
-            self.after(2000, lambda: webbrowser.open("http://localhost:5000"))
-            messagebox.showinfo(
-                "ממשק ווב",
-                "השרת מופעל.\n\nהדפדפן ייפתח אוטומטית לכתובת:\nhttp://localhost:5000\n\n"
-                "לסגירה – סגור את חלון ה-launcher.",
-            )
         except Exception as exc:  # noqa: BLE001
             messagebox.showerror("שגיאה", f"לא ניתן להפעיל שרת ווב:\n{exc}")
+            return
+
+        # Show a status label and poll in background until the server is ready
+        self.model_var.set("⏳  מפעיל שרת ווב... אנא המתן")
+        threading.Thread(target=self._wait_for_server, daemon=True).start()
+
+    def _wait_for_server(self, url: str = "http://localhost:5000",
+                         timeout: int = 120) -> None:
+        """Poll until the Flask server responds, then open the browser."""
+        import urllib.request as _req
+        import urllib.error as _err
+
+        for _ in range(timeout * 2):   # check every 0.5 s
+            try:
+                _req.urlopen(url, timeout=1)
+                # Server is up – switch back to main thread
+                self.after(0, self._open_browser, url)
+                return
+            except (_err.URLError, OSError):
+                pass
+            import time
+            time.sleep(0.5)
+
+        # Timed out
+        self.after(0, messagebox.showerror, "שגיאה",
+                   "השרת לא הגיב תוך 2 דקות.\nבדוק שה-requirements מותקנים.")
+        self.after(0, self._check_model_on_start)
+
+    def _open_browser(self, url: str) -> None:
+        self.model_var.set("✅  שרת ווב פעיל – http://localhost:5000")
+        webbrowser.open(url)
 
     def _assert_model(self) -> bool:
         if find_model():
