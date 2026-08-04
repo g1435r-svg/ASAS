@@ -1,0 +1,24 @@
+# Models (large files)
+models/
+*.gguf
+*.bin
+*.safetensors
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+chat_history.json

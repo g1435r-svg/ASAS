@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>בינה מלאכותית בעברית - אופליין</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 { font-size: 1.2rem; color: #58a6ff; }
+
+    #status-badge {
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: #21262d;
+      border: 1px solid #30363d;
+    }
+    #status-badge.ready { color: #3fb950; border-color: #3fb950; }
+    #status-badge.error  { color: #f85149; border-color: #f85149; }
+
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .message.user {
+      align-self: flex-start;
+      background: #1f6feb;
+      color: #fff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .message.assistant {
+      align-self: flex-end;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-bottom-left-radius: 2px;
+    }
+
+    .message.system-msg {
+      align-self: center;
+      background: transparent;
+      color: #8b949e;
+      font-size: 0.85rem;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+    }
+
+    #input-area {
+      background: #161b22;
+      border-top: 1px solid #30363d;
+      padding: 12px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    #user-input {
+      flex: 1;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      color: #c9d1d9;
+      font-size: 1rem;
+      padding: 10px 14px;
+      resize: none;
+      min-height: 44px;
+      max-height: 160px;
+      font-family: inherit;
+      direction: rtl;
+      text-align: right;
+      outline: none;
+    }
+    #user-input:focus { border-color: #58a6ff; }
+
+    button {
+      background: #238636;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    button:hover  { background: #2ea043; }
+    button:disabled { background: #21262d; color: #8b949e; cursor: not-allowed; }
+
+    #clear-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 10px 14px;
+    }
+    #clear-btn:hover { background: #30363d; }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #58a6ff44;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 בינה מלאכותית בעברית — אופליין</h1>
+  <span id="status-badge">בודק מצב...</span>
+</header>
+
+<div id="chat-container">
+  <div class="message system-msg">ברוך הבא! שאל אותי כל שאלה בעברית.</div>
+</div>
+
+<div id="input-area">
+  <button id="clear-btn" title="נקה שיחה" onclick="clearChat()">🗑️</button>
+  <textarea id="user-input" rows="1" placeholder="הקלד הודעה..."></textarea>
+  <button id="send-btn" onclick="sendMessage()">שלח ▶</button>
+</div>
+
+<script>
+  const chatContainer = document.getElementById('chat-container');
+  const userInput     = document.getElementById('user-input');
+  const sendBtn       = document.getElementById('send-btn');
+  const statusBadge   = document.getElementById('status-badge');
+
+  // Check model status on load
+  fetch('/api/status')
+    .then(r => r.json())
+    .then(data => {
+      if (data.model_loaded) {
+        statusBadge.textContent = '✅ מודל פעיל';
+        statusBadge.classList.add('ready');
+      } else {
+        statusBadge.textContent = '❌ מודל לא נטען';
+        statusBadge.classList.add('error');
+        addMessage('system-msg', 'המודל לא נטען. הנח קובץ GGUF בתיקיית models/ והפעל מחדש את השרת.');
+      }
+    })
+    .catch(() => {
+      statusBadge.textContent = '⚠️ שגיאת חיבור';
+      statusBadge.classList.add('error');
+    });
+
+  // Load history
+  fetch('/api/history')
+    .then(r => r.json())
+    .then(history => {
+      history.forEach(turn => {
+        addMessage('user', turn.user);
+        addMessage('assistant', turn.assistant);
+      });
+    });
+
+  // Auto-resize textarea
+  userInput.addEventListener('input', () => {
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 160) + 'px';
+  });
+
+  // Send on Enter (Shift+Enter = newline)
+  userInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  function addMessage(role, text) {
+    const div = document.createElement('div');
+    div.className = 'message ' + role;
+    div.textContent = text;
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return div;
+  }
+
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    addMessage('user', text);
+    userInput.value = '';
+    userInput.style.height = 'auto';
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span class="spinner"></span>';
+
+    const thinkingDiv = addMessage('assistant', '⏳ מעבד...');
+
+    try {
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await resp.json();
+      thinkingDiv.textContent = data.reply || data.error || 'שגיאה לא ידועה';
+    } catch (err) {
+      thinkingDiv.textContent = 'שגיאת רשת: ' + err.message;
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = 'שלח ▶';
+    }
+  }
+
+  async function clearChat() {
+    await fetch('/api/clear', { method: 'POST' });
+    chatContainer.innerHTML = '<div class="message system-msg">השיחה נוקתה.</div>';
+  }
+</script>
+</body>
+</html>
